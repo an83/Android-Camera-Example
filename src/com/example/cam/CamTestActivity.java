@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import android.app.Activity;
 import android.content.Context;
@@ -27,6 +29,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.SurfaceView;
@@ -54,6 +57,8 @@ public class CamTestActivity extends Activity implements SensorEventListener {
 	
 	private SensorManager mSensorManager;
 	private Sensor mOrientation;
+	private Timer _timer;
+	private TimerTask _captuerAsynchronousTask;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -101,9 +106,10 @@ public class CamTestActivity extends Activity implements SensorEventListener {
 //				camera.stopPreview();
 //				camera.takePicture(shutterCallback, rawCallback, jpegCallback);
 								
-				picOrientation = currentOrientation.clone();
-				camera.takePicture(null, null, jpegCallback);
+//				picOrientation = currentOrientation.clone();
+//				camera.takePicture(null, null, jpegCallback);
 
+				startTimer();
 			}
 		});
 
@@ -123,6 +129,37 @@ public class CamTestActivity extends Activity implements SensorEventListener {
 			}
 		});
 
+		setupCameraCaptureAsyncTask();
+	}
+	
+	public void setupCameraCaptureAsyncTask() {
+	    final Handler handler = new Handler();
+	    _timer = new Timer();
+	    _captuerAsynchronousTask = new TimerTask() {       
+	        @Override
+	        public void run() {
+	        	Log.d(TAG, "task start..");
+	        	handler.post(new Runnable() {
+	        		public void run(){
+	        			Log.d(TAG, "run start..");
+	    	        	try {
+	    	        		picOrientation = currentOrientation.clone();
+	                    	camera.takePicture(null, null, jpegCallback);
+	                    	
+	                    	Log.d(TAG, "async finish");
+	                    } catch (Exception e) {
+	                        // TODO Auto-generated catch block
+	                    	Log.e(TAG, e.getMessage());
+	                    }		
+	        		}
+	        	});
+	        	Log.d(TAG, "task finish..");
+	        }
+	    };	    
+	}
+	
+	private void startTimer(){
+		_timer.schedule(_captuerAsynchronousTask, 0, 1000);
 	}
 
 	@Override
