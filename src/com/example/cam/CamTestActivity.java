@@ -27,6 +27,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
@@ -48,7 +49,9 @@ public class CamTestActivity extends Activity implements SensorEventListener {
 	Activity act;
 	Context ctx;
 	TextView text;
-
+	float[] currentOrientation, picOrientation; 
+	DateFormat df = new DateFormat();
+	
 	private SensorManager mSensorManager;
 	private Sensor mOrientation;
 
@@ -57,6 +60,9 @@ public class CamTestActivity extends Activity implements SensorEventListener {
 		super.onCreate(savedInstanceState);
 		ctx = this;
 		act = this;
+		
+		currentOrientation = picOrientation = new float[3];
+		
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -95,6 +101,7 @@ public class CamTestActivity extends Activity implements SensorEventListener {
 //				camera.stopPreview();
 //				camera.takePicture(shutterCallback, rawCallback, jpegCallback);
 								
+				picOrientation = currentOrientation.clone();
 				camera.takePicture(null, null, jpegCallback);
 
 			}
@@ -173,6 +180,8 @@ public class CamTestActivity extends Activity implements SensorEventListener {
 		float azimuth_angle = event.values[0];
 		float pitch_angle = event.values[1];
 		float roll_angle = event.values[2];
+		
+		currentOrientation = event.values.clone();
 
 		text.setText(String.format("rotation %s,%s,%s", azimuth_angle, pitch_angle, roll_angle));
 	}
@@ -234,7 +243,9 @@ public class CamTestActivity extends Activity implements SensorEventListener {
 				File dir = new File(sdCard.getAbsolutePath() + "/camtest");
 				dir.mkdirs();
 
-				String fileName = String.format("%d.jpg", System.currentTimeMillis());
+				String date = (String) df.format("yyyyMMddhhmmss", new java.util.Date());
+				
+				String fileName = String.format("%s_%s_%s_%s.jpg", date, picOrientation[0], picOrientation[1], picOrientation[2]);
 				File outFile = new File(dir, fileName);
 
 				outStream = new FileOutputStream(outFile);
